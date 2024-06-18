@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ваше Название</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // Инициализация объекта Telegram Web App
+        let tg = window.Telegram.WebApp;
+
+        document.addEventListener('DOMContentLoaded', function() {
+    // Функция для отправки данных на сервер
+    function sendDataToServer(tgId) {
+        return fetch('http://127.0.0.1:5000/receive_tg_id', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: tgId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Успех:', data);
+            fetchUserData(); // Вызов функции для загрузки данных из базы данных
+        })
+        .catch((error) => {
+            console.error('Ошибка:', error);
+        });
+    }
+
+    // Функция для получения данных пользователя и их отображения
+    function fetchUserData() {
+        fetch('/api/userdata')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки данных пользователя');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Обновление DOM с помощью полученных данных
+            document.getElementById('balance').textContent = data.balance;
+            document.getElementById('windeposit').textContent = data.windeposit;
+            document.getElementById('deposit').textContent = data.deposit;
+            document.getElementById('trades').textContent = data.trades;
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+        });
+    }
+
+    // Получение данных пользователя из Telegram и автоматическая отправка на сервер
+    tg.getUser().then(function(user) {
+        let tgId = user.id; // Получаем tg_id пользователя
+        sendDataToServer(tgId); // Автоматическая отправка tg_id на сервер
+    });
+});
+    </script>
+</head>
+<body>
+    <div>Баланс: <span id="balance"></span></div>
+<div>Выигрышный депозит: <span id="windeposit"></span></div>
+<div>Депозит: <span id="deposit"></span></div>
+<div>Сделки: <span id="trades"></span></div>
+</body>
+</html>
